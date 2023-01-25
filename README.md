@@ -1,46 +1,90 @@
-# Getting Started with Create React App
+# Hardhat Boilerplate
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repository contains a sample project that you can use as the starting point
+for your Ethereum project. It's also a great fit for learning the basics of
+smart contract development.
 
-## Available Scripts
+This project is intended to be used with the
+[Hardhat Beginners Tutorial](https://hardhat.org/tutorial), but you should be
+able to follow it by yourself by reading the README and exploring its
+`contracts`, `tests`, `scripts` and `frontend` directories.
 
-In the project directory, you can run:
+## Quick start
 
-### `npm start`
+The first things you need to do are cloning this repository and installing its
+dependencies:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```sh
+git clone https://github.com/NomicFoundation/hardhat-boilerplate.git
+cd hardhat-boilerplate
+npm install
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Once installed, let's run Hardhat's testing network:
 
-### `npm test`
+```sh
+npx hardhat node
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Then, on a new terminal, go to the repository's root folder and run this to
+deploy your contract:
 
-### `npm run build`
+```sh
+npx hardhat run scripts/deploy.js --network localhost
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Finally, we can run the frontend with:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```sh
+cd frontend
+npm install
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Open [http://localhost:3000/](http://localhost:3000/) to see your Dapp. You will
+need to have [Metamask](https://metamask.io) installed and listening to
+`localhost 8545`.
 
-### `npm run eject`
+## User Guide
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+You can find detailed instructions on using this repository and many tips in [its documentation](https://hardhat.org/tutorial).
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- [Writing and compiling contracts](https://hardhat.org/tutorial/writing-and-compiling-contracts/)
+- [Setting up the environment](https://hardhat.org/tutorial/setting-up-the-environment/)
+- [Testing Contracts](https://hardhat.org/tutorial/testing-contracts/)
+- [Setting up Metamask](https://hardhat.org/tutorial/boilerplate-project#how-to-use-it)
+- [Hardhat's full documentation](https://hardhat.org/docs/)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+For a complete introduction to Hardhat, refer to [this guide](https://hardhat.org/getting-started/#overview).
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## What's Included?
 
-## Learn More
+This repository uses our recommended hardhat setup, by using our [`@nomicfoundation/hardhat-toolbox`](https://hardhat.org/hardhat-runner/plugins/nomicfoundation-hardhat-toolbox). When you use this plugin, you'll be able to:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- Deploy and interact with your contracts using [ethers.js](https://docs.ethers.io/v5/) and the [`hardhat-ethers`](https://hardhat.org/hardhat-runner/plugins/nomiclabs-hardhat-ethers) plugin.
+- Test your contracts with [Mocha](https://mochajs.org/), [Chai](https://chaijs.com/) and our own [Hardhat Chai Matchers](https://hardhat.org/hardhat-chai-matchers) plugin.
+- Interact with Hardhat Network with our [Hardhat Network Helpers](https://hardhat.org/hardhat-network-helpers).
+- Verify the source code of your contracts with the [hardhat-etherscan](https://hardhat.org/hardhat-runner/plugins/nomiclabs-hardhat-etherscan) plugin.
+- Get metrics on the gas used by your contracts with the [hardhat-gas-reporter](https://github.com/cgewecke/hardhat-gas-reporter) plugin.
+- Measure your tests coverage with [solidity-coverage](https://github.com/sc-forks/solidity-coverage).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+This project also includes [a sample frontend/Dapp](./frontend), which uses [Create React App](https://github.com/facebook/create-react-app).
+
+## Troubleshooting
+
+- `Invalid nonce` errors: if you are seeing this error on the `npx hardhat node`
+  console, try resetting your Metamask account. This will reset the account's
+  transaction history and also the nonce. Open Metamask, click on your account
+  followed by `Settings > Advanced > Reset Account`.
+
+## Setting up your editor
+
+[Hardhat for Visual Studio Code](https://hardhat.org/hardhat-vscode) is the official Hardhat extension that adds advanced support for Solidity to VSCode. If you use Visual Studio Code, give it a try!
+
+## Getting help and updates
+
+If you need help with this project, or with Hardhat in general, please read [this guide](https://hardhat.org/hardhat-runner/docs/guides/getting-help) to learn where and how to get it.
+
+For the latest news about Hardhat, [follow us on Twitter](https://twitter.com/HardhatHQ), and don't forget to star [our GitHub repository](https://github.com/NomicFoundation/hardhat)!
+
+**Happy _building_!**
