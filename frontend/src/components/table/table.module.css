@@ -1,0 +1,37 @@
+.tableWrapper {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    margin: 5px;
+}
+
+.table {
+    z-index: 100;
+    background-color: #5e4837;
+    box-shadow: 0 3px 9pt rgba(0, 0, 0, .23), 0 3px 9pt rgba(0, 0, 0, .16);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.tableSquare {
+    height: 100%;
+    width: 75%;
+    border-radius: 20px;
+}
+
+.tableCircle {
+    height: 80%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+}
+
+.table span {
+    text-align: center;
+    height: 24px;
+    aspect-ratio: 1 / 1;
+    color: #cccccc;
+    background-color: #e76d8d;
+    border-radius: 50%;
+}

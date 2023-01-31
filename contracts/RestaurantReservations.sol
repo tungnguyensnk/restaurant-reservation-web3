@@ -5,17 +5,22 @@ import "hardhat/console.sol";
 
 contract RestaurantReservations {
     uint32 private counterReservations;
-    uint16 private counterMenuItems;
     uint16 private counterReviews;
     uint32 private counterTables;
+    uint32 private seaFoodPrice;
     address private owner;
+
+    // Constructor
     constructor() {
         owner = msg.sender;
         role[msg.sender] = 2;
         counterReservations = 0;
-        counterMenuItems = 0;
         counterReviews = 0;
         counterTables = 0;
+        seaFoodPrice = 2000;
+        buffetPrice[BuffetPackage.Standard] = 10000;
+        buffetPrice[BuffetPackage.Premium] = 20000;
+        buffetPrice[BuffetPackage.Deluxe] = 30000;
     }
 
     // Events
@@ -24,25 +29,24 @@ contract RestaurantReservations {
     event PaymentReceived(address indexed customer, uint reservationId, uint amount);
     event ReservationStatusChanged(address indexed customer, uint reservationId, ReservationStatus status);
     event ReviewAdded(address indexed customer, uint reviewId);
-    event removeItem(uint id, string name, uint32 price, bool isAvailable, string description);
-    event MenuItemAdded(uint id, string name, uint32 price, bool isAvailable, string description);
-    event updateItem(uint id, string name, uint32 price, bool isAvailable, string description);
     event TableAdded(uint32 id);
 
     // Enums
     enum ReservationStatus {
         Pending,
-        Paid,
+        Deposited,
         Confirmed,
         Cancelled,
         Completed
     }
 
-    // Structs
-    struct Item {
-        uint16 id;
-        uint16 quantity;
+    enum BuffetPackage {
+        Standard,
+        Premium,
+        Deluxe
     }
+
+    // Structs
 
     struct Reservation {
         uint32 id;
@@ -51,17 +55,11 @@ contract RestaurantReservations {
         uint32 timestampEat;
         uint16 numberOfPeople;
         uint8[] chairsReserved;
-        Item[] listItems;
+        BuffetPackage buffetPackage;
+        bool useSeaFood;
+        uint32 cost;
         ReservationStatus status;
         string specialRequest;
-    }
-
-    struct MenuItem {
-        uint16 id;
-        string name;
-        uint32 price;
-        bool isAvailable;
-        string description;
     }
 
     struct Review {
@@ -73,13 +71,13 @@ contract RestaurantReservations {
     }
 
     // Mapping
+    mapping(BuffetPackage => uint32) public buffetPrice;
     mapping(address => uint) public points;
     mapping(uint32 => bool) public tables; // true = reserved, false = available
     mapping(uint => Reservation) public reservations;
-    mapping(uint => MenuItem) public menuItems;
     mapping(uint => Review) public reviews;
     mapping(address => uint) public role; // 0 = customer, 1 = restaurant, 2 = admin
-
+    mapping(address => string) public name;
     // Modifiers
     modifier onlyCustomer(uint _reservationId) {
         require(msg.sender == reservations[_reservationId].customer, "Only customer can call this function");
@@ -96,12 +94,13 @@ contract RestaurantReservations {
         _;
     }
 
-    modifier validItems(Item[] memory _listItems) {
-        for (uint i = 0; i < _listItems.length; i++) {
-            require(_listItems[i].id > 0 && _listItems[i].id <= counterMenuItems, "Item id must be between 1 and number of menu items");
-            require(_listItems[i].quantity > 0, "Item quantity must be greater than 0");
-            require(menuItems[_listItems[i].id].isAvailable == true, "Item is not available");
-        }
+    modifier onlyCustomerOrRestaurant() {
+        require(role[msg.sender] == 0 || role[msg.sender] == 1 || role[msg.sender] == 2, "Only customer, restaurant or admin can call this function");
+        _;
+    }
+
+    modifier validTable(uint32 _tableId) {
+        require(_tableId > 0 && _tableId <= counterTables, "Table id must be between 1 and number of tables");
         _;
     }
 
@@ -128,7 +127,7 @@ contract RestaurantReservations {
     }
 
     // Get all reservations of a customer
-    function getAllReservationsOfCustomer(address _customer) public view returns (Reservation[] memory) {
+    function getAllReservations(address _customer) public view returns (Reservation[] memory) {
         Reservation[] memory listReservations = new Reservation[](counterReservations);
         uint counter = 0;
         for (uint i = 0; i < counterReservations; i++) {
@@ -140,15 +139,29 @@ contract RestaurantReservations {
         }
         return listReservations;
     }
+
+    // Get name
+    function getName() public view returns (string memory) {
+        return name[msg.sender];
+    }
     // Setters
 
+    // Set name
+    function setName(string memory _name) public {
+        name[msg.sender] = _name;
+    }
     // Functions
 
     // Add a reservation
     function addReservation(
-        uint32 _timestampReservation, uint32 _timestampEat, uint16 _numberOfPeople, uint8[] memory _tablesReserved,
-        Item[] memory _listItems, string memory _specialRequest
-    ) public validItems(_listItems) {
+        uint32 _timestampReservation,
+        uint32 _timestampEat,
+        uint16 _numberOfPeople,
+        uint8[] memory _tablesReserved,
+        BuffetPackage _buffetPackage,
+        bool _useSeaFood,
+        string memory _specialRequest
+    ) public {
         require(_numberOfPeople > 0, "Number of people must be greater than 0");
         require(_timestampEat > _timestampReservation, "Eat time must be after reservation time");
         require(_timestampEat - _timestampReservation >= 3600, "Eat time must be at least 1 hour after reservation time");
@@ -163,21 +176,25 @@ contract RestaurantReservations {
         for (uint i = 0; i < _tablesReserved.length; i++) {
             tables[_tablesReserved[i]] = true;
         }
-        counterReservations++;
-        Reservation storage reservation = reservations[counterReservations];
-        reservation.id = counterReservations;
-        reservation.customer = msg.sender;
-        reservation.timestampReservation = _timestampReservation;
-        reservation.timestampEat = _timestampEat;
-        reservation.numberOfPeople = _numberOfPeople;
-        reservation.chairsReserved = _tablesReserved;
-        reservation.status = ReservationStatus.Pending;
-        reservation.specialRequest = _specialRequest;
-
-        for (uint i = 0; i < _listItems.length; i++) {
-            reservation.listItems.push(_listItems[i]);
+        uint32 price = buffetPrice[_buffetPackage];
+        if (_useSeaFood) {
+            price += seaFoodPrice;
         }
 
+        counterReservations++;
+        Reservation memory reservation = Reservation(
+            counterReservations,
+            msg.sender,
+            _timestampReservation,
+            _timestampEat,
+            _numberOfPeople,
+            _tablesReserved,
+            _buffetPackage,
+            _useSeaFood,
+            price * _numberOfPeople,
+            ReservationStatus.Pending,
+            _specialRequest
+        );
         emit ReservationAdded(msg.sender, reservation.id);
     }
 
@@ -192,53 +209,44 @@ contract RestaurantReservations {
         emit ReservationCancelled(msg.sender, _reservationId);
     }
 
+    // Deposit for a reservation
+    function depositReservation(uint _reservationId) public payable onlyCustomer(_reservationId) {
+        require(reservations[_reservationId].status == ReservationStatus.Pending, "Reservation is not pending");
+        uint deposit = reservations[_reservationId].cost / 5;
+        require(msg.value >= deposit, "Amount must be greater than deposit");
+        payable(owner).transfer(deposit);
+        payable(msg.sender).transfer(msg.value - deposit);
+        reservations[_reservationId].status = ReservationStatus.Deposited;
+        emit PaymentReceived(msg.sender, _reservationId, deposit);
+    }
     // Pay for a reservation
     function payReservation(uint _reservationId) public payable onlyCustomer(_reservationId) {
-        require(reservations[_reservationId].status == ReservationStatus.Pending, "Reservation is not pending");
-        uint total = 0;
-        for (uint i = 0; i < reservations[_reservationId].listItems.length; i++) {
-            total += menuItems[reservations[_reservationId].listItems[i].id].price * reservations[_reservationId].listItems[i].quantity;
-        }
-        require(msg.value >= total, "Amount must be greater than total");
-        payable(owner).transfer(total);
-        payable(msg.sender).transfer(msg.value - total);
-
-        for (uint i = 0; i < reservations[_reservationId].chairsReserved.length; i++) {
-            tables[reservations[_reservationId].chairsReserved[i]] = false;
-        }
-
-        reservations[_reservationId].status = ReservationStatus.Paid;
-        emit PaymentReceived(msg.sender, _reservationId, msg.value);
-    }
-
-    // Add Menu Item
-    function addMenuItem(string memory _name, uint32 _price, bool _isAvailable, string memory _description) public onlyRestaurant {
-        require(bytes(_name).length > 0, "Name must not be empty");
-        require(_price > 0, "Price must be greater than 0");
-        require(bytes(_description).length > 0, "Description must not be empty");
-        counterMenuItems++;
-        MenuItem storage menuItem = menuItems[counterMenuItems];
-        menuItem.id = counterMenuItems;
-        menuItem.name = _name;
-        menuItem.price = _price;
-        menuItem.isAvailable = _isAvailable;
-        menuItem.description = _description;
-        emit MenuItemAdded(menuItem.id, _name, _price, _isAvailable, _description);
+        require(reservations[_reservationId].status == ReservationStatus.Confirmed, "Reservation is not confirmed");
+        uint cost = reservations[_reservationId].cost * 4 / 5;
+        require(msg.value >= cost, "Amount must be greater than cost");
+        payable(owner).transfer(cost);
+        payable(msg.sender).transfer(msg.value - cost);
+        reservations[_reservationId].status = ReservationStatus.Completed;
+        emit PaymentReceived(msg.sender, _reservationId, cost);
     }
 
     // Add Table
-    function addTable(uint32 _numberOfTables) public onlyRestaurant {
+    function addTable(uint32 _numberOfTables) public onlyRestaurant returns (uint) {
         require(_numberOfTables > 0, "Number of chairs must be greater than 0");
         counterTables += _numberOfTables;
         tables[counterTables] = false;
-        emit TableAdded(counterTables);
+        return counterTables;
+    }
+
+    // Change status of a table
+    function changeStatusTable(uint32 _tableId, bool _isAvailable) public onlyRestaurant validTable(_tableId) {
+        tables[_tableId] = _isAvailable;
     }
 
     // Change status of a reservation
     function changeStatusReservation(uint _reservationId, ReservationStatus _status)
     public onlyRestaurant validReservation(_reservationId) {
         reservations[_reservationId].status = _status;
-        emit ReservationStatusChanged(msg.sender, _reservationId, _status);
     }
 
 }

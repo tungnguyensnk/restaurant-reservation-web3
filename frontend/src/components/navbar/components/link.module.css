@@ -1,0 +1,11 @@
+.lk:link, .lk:visited {
+    color: #f3eef2;
+    padding: 2px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.lk:hover, .lk:active {
+    border-bottom: 2px solid green;
+}

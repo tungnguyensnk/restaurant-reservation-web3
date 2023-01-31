@@ -2,10 +2,16 @@ require("@nomicfoundation/hardhat-toolbox");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.17",
-  networks: {
-    hardhat: {
-      chainId: 1337 // We set 1337 to make interacting with MetaMask simpler
+    solidity: "0.8.17",
+    networks: {
+        hardhat: {
+            chainId: 1337 // We set 1337 to make interacting with MetaMask simpler
+        }
+    },
+    settings: {
+        optimizer: {
+            enabled: true,
+            runs: 1
+        }
     }
-  }
 };

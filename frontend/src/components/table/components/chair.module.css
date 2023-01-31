@@ -1,0 +1,14 @@
+.chairWrapper {
+    display: flex;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+}
+
+.chair {
+    height: 24px;
+    width: 24px;
+    z-index: 99;
+    background-color: #b8a18d;
+    border-radius: 40%;
+}
